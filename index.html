@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>حياتي</title>
+<style>
+  :root{
+    --bg:#1e1530; --card:rgba(255,255,255,.05); --line:rgba(95,211,196,.18);
+    --teal:#5fd3c4; --pink:#f28bb3; --amber:#f5b85c; --violet:#a98bf5;
+    --text:#ece8f5; --muted:#a79fbd; --track:rgba(255,255,255,.08);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{background:var(--bg)}
+  body{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","Segoe UI",Tahoma,sans-serif;
+    color:var(--text);padding:20px 18px;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:860px;margin:0 auto;display:grid;gap:14px}
+  .head{text-align:center}
+  .basmala{font-size:13px;color:var(--muted);margin-bottom:2px}
+  .slogan{font-size:clamp(22px,4vw,34px);font-weight:700;color:var(--teal);line-height:1.6}
+  .row{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px 18px}
+  .label{font-size:11px;letter-spacing:.08em;color:var(--muted);margin-bottom:8px}
+  #clock{font-size:clamp(34px,6vw,48px);font-weight:700;color:var(--teal);direction:ltr;text-align:right;
+    font-variant-numeric:tabular-nums;line-height:1.1}
+  #greg{font-size:14px;color:var(--text);margin-top:6px;direction:ltr;text-align:right}
+  #hijri{font-size:15px;color:var(--amber);margin-top:2px}
+  .w{display:flex;justify-content:space-between;align-items:center;padding:8px 0}
+  .w + .w{border-top:1px solid var(--track)}
+  .city{font-size:15px}
+  .city small{display:block;font-size:11px;color:var(--muted)}
+  .temp{font-size:24px;font-weight:600;direction:ltr;font-variant-numeric:tabular-nums}
+  .bars{display:grid;gap:12px}
+  .bar .top{display:flex;justify-content:space-between;font-size:13px;margin-bottom:6px}
+  .bar .top b{font-weight:600;direction:ltr}
+  .track{height:8px;border-radius:99px;background:var(--track);overflow:hidden}
+  .fill{height:100%;border-radius:99px;width:0;transition:width .5s}
+  @media (max-width:520px){ .row{grid-template-columns:1fr} }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="head">
+    <div class="basmala">بسم الله الرحمن الرحيم</div>
+    <div class="slogan">لَنْ يُصِيبَنَا إِلَّا مَا كَتَبَ اللَّهُ لَنَا</div>
+  </div>
+
+  <div class="row">
+    <div class="card">
+      <div class="label">🕰️ الوقت</div>
+      <div id="clock">--:--</div>
+      <div id="greg"></div>
+      <div id="hijri"></div>
+    </div>
+    <div class="card">
+      <div class="label">🌤️ الطقس</div>
+      <div class="w"><div class="city">تبسة<small>Tébessa</small></div><div class="temp" id="w1">—</div></div>
+      <div class="w"><div class="city">حاسي الرمل<small>Hassi R'Mel</small></div><div class="temp" id="w2">—</div></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="label">⏳ المتبقي</div>
+    <div class="bars">
+      <div class="bar"><div class="top"><span>اليوم</span><b id="dL"></b></div><div class="track"><div class="fill" id="dF" style="background:var(--teal)"></div></div></div>
+      <div class="bar"><div class="top"><span>الأسبوع</span><b id="wL"></b></div><div class="track"><div class="fill" id="wF" style="background:var(--pink)"></div></div></div>
+      <div class="bar"><div class="top"><span>الشهر</span><b id="mL"></b></div><div class="track"><div class="fill" id="mF" style="background:var(--amber)"></div></div></div>
+      <div class="bar"><div class="top"><span>السنة</span><b id="yL"></b></div><div class="track"><div class="fill" id="yF" style="background:var(--violet)"></div></div></div>
+    </div>
+  </div>
+</div>
+<script>
+const TZ = "Africa/Algiers";
+const $ = id => document.getElementById(id);
+function local(){ return new Date(new Date().toLocaleString("en-US", {timeZone: TZ})); }
+function pad(n){ return String(n).padStart(2, "0"); }
+function setBar(k, frac, left){
+  const p = Math.min(100, Math.max(0, (1 - frac) * 100)); // bar = time left
+  $(k + "F").style.width = p.toFixed(1) + "%";
+  $(k + "L").textContent = left;
+}
+function tick(){
+  const d = local(), now = new Date();
+  $("clock").textContent = pad(d.getHours()) + ":" + pad(d.getMinutes());
+  try { $("greg").textContent = new Intl.DateTimeFormat("en-GB", {weekday:"long", day:"numeric", month:"long", year:"numeric", timeZone:TZ}).format(now); } catch(e){}
+  try { $("hijri").textContent = new Intl.DateTimeFormat("ar-TN-u-ca-islamic-umalqura", {day:"numeric", month:"long", year:"numeric", timeZone:TZ}).format(now); } catch(e){}
+
+  const sec = d.getHours() * 3600 + d.getMinutes() * 60 + d.getSeconds();
+  const left = 86400 - sec;
+  setBar("d", sec / 86400, Math.floor(left / 3600) + "h " + Math.floor(left % 3600 / 60) + "m");
+
+  const wi = (d.getDay() + 1) % 7; // Saturday = 0
+  setBar("w", (wi * 86400 + sec) / (7 * 86400), (6 - wi) + "d " + Math.floor(left / 3600) + "h");
+
+  const dim = new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate();
+  setBar("m", ((d.getDate() - 1) * 86400 + sec) / (dim * 86400), (dim - d.getDate()) + " days");
+
+  const y = d.getFullYear();
+  const diy = ((y % 4 === 0 && y % 100 !== 0) || y % 400 === 0) ? 366 : 365;
+  const doy = Math.floor((new Date(y, d.getMonth(), d.getDate()) - new Date(y, 0, 1)) / 864e5);
+  setBar("y", (doy * 86400 + sec) / (diy * 86400), (diy - doy - 1) + " days");
+}
+const WMO = {0:"☀️",1:"🌤️",2:"⛅",3:"☁️",45:"🌫️",48:"🌫️",51:"🌦️",53:"🌦️",55:"🌧️",61:"🌦️",63:"🌧️",65:"🌧️",71:"🌨️",73:"🌨️",75:"❄️",80:"🌦️",81:"🌧️",82:"⛈️",95:"⛈️",96:"⛈️",99:"⛈️"};
+async function weather(lat, lon, id){
+  try {
+    const r = await fetch("https://api.open-meteo.com/v1/forecast?latitude=" + lat + "&longitude=" + lon + "&current=temperature_2m,weather_code&timezone=Africa%2FAlgiers");
+    const j = await r.json();
+    $(id).textContent = (WMO[j.current.weather_code] || "") + " " + Math.round(j.current.temperature_2m) + "°";
+  } catch(e) { $(id).textContent = "—"; }
+}
+function loadW(){ weather(35.4042, 8.1242, "w1"); weather(32.9333, 3.2833, "w2"); }
+tick(); setInterval(tick, 20000); loadW(); setInterval(loadW, 30 * 60 * 1000);
+</script>
+</body>
+</html>
